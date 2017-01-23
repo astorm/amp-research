@@ -1,0 +1,391 @@
+<html>
+<head>
+<title>Adobe Analytics</title>
+<script language="JavaScript" type="text/javascript" src="VisitorAPI.js"></script>
+<script language="JavaScript" type="text/javascript" src="AppMeasurement.js"></script>
+</head>
+<body>
+<script>
+var code_version = "cnn.amp.11:20160915";
+	
+	//parent URL
+	var rurl = document.referrer||"https://www.cnn.com/";
+	var canonical = (window.location.search.match(new RegExp("canonical_url=(.*?)($|\&)", "i")) || [])[1] || "";
+	if (canonical) { rurl = canonical; }
+	var urls = rurl.split("/");
+	var rdomain = urls[2].replace("www.","");
+	var rurl2 = rurl.replace(/^https?:\/\//,"").replace("index.html","");
+	var rpath = rurl2.replace(urls[2],""); //remove domain
+
+	var s_account = "cnn-adbp-domestic";
+	if (rdomain.indexOf("money") != -1) { s_account = "aolturnercnnmoney-adbp-mobileweb-prod"; }
+	if (rdomain.indexOf("cnnespanol") != -1 || rdomain.indexOf("cnne-test") != -1) { s_account = "cnn-adbp-esp"; }
+
+	var s_trackingServer = "smetrics.cnn.com";
+	var s_visitorNamespace = "cnn";
+	var v_orgId = "7FF852E2556756057F000101@AdobeOrg";
+
+	var visitor = new Visitor.getInstance(v_orgId);
+	visitor.trackingServer = s_trackingServer;
+
+
+
+	var s = s_gi(s_account);
+	s.account = s_account;
+	s.trackingServer = s_trackingServer;
+	s.visitorNamespace = s_visitorNamespace;
+	s.visitor = Visitor.getInstance(s_visitorNamespace);
+
+	// branding_content_page - prop11/eVar11
+	var branding_content_page = s.Util.getQueryParam("branding_content_page")||"";
+
+	// publish_date - prop16/eVar16
+	var publish_date = s.Util.getQueryParam("publish_date")||"";
+
+	// day since published - prop10/eVar10
+	var day_since_published = "";
+	try {
+		var curr_date = (new Date).getTime();
+		var publish_time = (new Date(publish_date)).getTime();
+		day_since_published = Math.ceil((curr_date - publish_time)/86400000);
+	} catch(e) {}
+
+	// headline - prop23/eVar23
+	var headline = s.Util.getQueryParam("headline")||"";
+	
+	//business unit - prop30/eVar30
+	var business_unit = (rdomain.indexOf("edition") != -1 ? "cnn international" : "cnn domestic");
+	if (rdomain.indexOf("money") != -1) { business_unit = "cnnmoney"; }
+	if (rdomain.indexOf("cnnespanol") != -1 || rdomain.indexOf("cnne-test") != -1) { business_unit = "cnnespanol"; }
+
+	//template type - prop32/eVar32
+	var template_type = s.Util.getQueryParam("template_type")||"content";
+	if (template_type) { template_type = template_type.replace(/%20/g," "); }
+	var pfix = (template_type.match(/index|video|blog|game|interactive|content|error|section|gallery|show|special|topic|profile|article/) ? "adbp:" : "other:");
+	var tt = pfix + template_type;
+	switch(template_type) {
+		case "article":
+			tt = "adbp:content";
+			break;
+		case "video":
+			tt = "content:video:nocollection";
+			break;
+		case "gallery":
+			tt = "content: gallery";
+			break;
+	}
+	template_type = "content";
+
+	//content type - prop33/eVar33
+	var content_type = (template_type == "content" ? "article read" : "none");
+
+	//pageName - pageName/eVar26
+	var pagename = "";
+	var templateTypeSmall = {
+		"index":		"in",
+		"video":		"v",
+		"videos":		"v",
+		"blog":			"b",
+		"blogs":		"b",
+		"game":			"g",
+		"games":		"g",
+		"interactive":	"it",
+		"content":		"c",
+		"error":		"err",
+		"section":		"sf",
+		"section front":"sf",
+		"gallery":		"ga",
+		"show":			"sh",
+		"shows":		"sh",
+		"special":		"sp",
+		"specials":		"sp",
+		"topic":		"t",
+		"profile":		"p",
+		"article":		"a"
+	} [template_type];
+	if (!templateTypeSmall) { templateTypeSmall = "c"; }
+	var j = (rdomain.indexOf("money") != -1 ? "mny:" : "cnn:");
+	var buc_p32 = j + templateTypeSmall;
+	var lastTwoDomain = thirdLevelDomain = pagename = "";
+	var domain_array = rdomain.split(".");
+	var currentPointer = domain_array.length - 3;
+	thirdLevelDomain = (currentPointer >= 0 ? domain_array[currentPointer] : "");
+	lastTwoDomain = /(\.\w+\.\w+)$/.exec(rdomain);
+	if (lastTwoDomain) { thirdLevelDomain = rdomain.replace(lastTwoDomain[0],""); }
+	if (thirdLevelDomain === "") {
+		pagename = buc_p32 + ":" + rpath;
+	} else {
+		pagename = buc_p32 + ":" + thirdLevelDomain + ":" + rpath;
+	}
+	pagename = pagename.replace(":us","");	//fix for us.cnn.com domain
+
+	//subsection - prop28/eVar28
+	var subsection = "";
+	//section - channel/eVar27
+	var section = "";
+	var patt1 = /\/.+\/\d{4}\/\d{2}\/\d{2}\/.+/;
+	if (canonical && patt1.test(canonical)) {
+		canonical = canonical.match(/\d{4}\/\d{2}\/\d{2}\/.+\//);
+		canonical = canonical[0].split("/");
+		section = canonical[3];
+		if(canonical[4] && canonical[4].indexOf(".") == -1){
+			subsection = canonical[4];
+		}
+
+	} else if (/^\/.+\/\d{4}\/\d{2}\/\d{2}\/.+/.test(rpath)) {
+		var i = rpath.match(/\d{4}\/\d{2}\/\d{2}\/.+\//);
+		i = i[0].split("/");
+		section = i[3];
+		if(i[4] && i[4].indexOf(".") == -1){
+			subsection = i[4];
+		}
+	} else if(canonical && (!patt1.test(canonical))){
+		canonical = canonical.split("/");
+		section = canonical[3];
+		if(canonical[4] && canonical[4].indexOf(".") == -1){
+			subsection = canonical[4];
+		}
+	}
+
+	
+
+	//transaction id - prop46/eVar46
+	try {
+		var cnnad_transactionID = Math.round((new Date()).getTime() / 1000) + "" + Math.floor(Math.random()*9007199254740992);
+	} catch(e) {}
+	
+	s.events = "event26";
+	s.pageName = pagename; s.eVar26 = "D=pageName";
+	s.server = s.eVar29 = rdomain;
+	s.channel = section; s.eVar27 = "D=ch";
+	s.prop10 = day_since_published; s.eVar10 = "D=c10";
+	s.prop11 = branding_content_page; s.eVar11 = "D=c11";
+	s.prop14 = "google amp"; s.eVar14 = "D=c14";
+	s.prop16 = publish_date; s.eVar16 = "D=c16";
+	s.prop23 = headline; s.eVar23 = "D=c23";
+	s.prop26 = rurl2;
+	s.prop28 = section + ":" + subsection; s.eVar28 = "D=c28";
+	s.prop30 = business_unit; s.eVar30 = "D=c30";
+	s.prop32 = tt; s.eVar32 = "D=c32";
+	s.prop33 = content_type; s.eVar33 = "D=c33";
+	s.prop35 = code_version; s.eVar35 = "D=c35";
+	s.prop46 = cnnad_transactionID||""; s.eVar46 = "D=c46";
+	s.prop64 = "cnn news"; s.eVar64 = "D=c64";
+	s.hier1 = "news|cnn|" + business_unit + "|" + s.server + "|" + s.channel + "|" + s.prop28;
+	
+	if (rdomain.indexOf("money") != -1) {
+		//category - prop1/eVar1, subcategory - prop2/eVar2
+		//section - channel/eVar27, subsection - prop28/eVar28
+		var path_array = rpath.replace(/\/\d{4}\/\d{2}\/\d{2}/g,"");				//remove dates
+		path_array = rpath.replace(/\/gallery/g,"");							//remove /gallery this dir does not include archives
+		path_array = path_array.replace(/\/\d+\//g,"/").substring(1).split("/");	//removes any other dates from URL
+		if (rpath.match(/\/galleries\/\w+.htm\w*/)) {								//match /galleries/moneymag.html
+			path_array = rpath.replace(/.htm\w*/,"").substring(1).split("/");		//remove .html or .htm
+		}
+		if (rpath.match(/\d{4}\/\d{2}\/\d{2}\/leadership\//) || rpath.match(/\d{4}\/\d{2}\/\d{2}\/leadership-post\//)) {
+			rpath = rpath.replace("leadership-post","leadership");
+			path_array = rpath.replace(/\/\d{4}\/\d{2}\/\d{2}/g,"").substring(1).split("/");
+		} else if(rpath.match(/video\/leadership/)) {
+			path_array = rpath.replace(/\/video/g,"").substring(1).split("/");
+		}
+		if (rpath.match(/data\/stocks-we-love/)) {
+			path_array = rpath.replace("/data\/stocks-we-love/","/investing\/stocks-we-love/").substring(1).split("/");
+		}
+		var mnySection = new Array();
+		var mnySectionTemp = new Array();
+		mnySection = {
+			"":					["Home","CNNMoney"],						// /\//
+			"news":				["Business News","News"],					// /\/news\//
+			"galleries":		["Business News","News"],					// /\/galleries\//
+			"data":				["Markets","Markets"],						// /\/data\//
+			"markets":			["Investing","Investing"],					// /\/markets\//
+			"media":			["Media","Media"],							// /\/media\//
+			"luxury":			["Luxury","Luxury"],						// /\/\/luxury\//
+			"investing":		["Investing","Investing"],					// /\/investing\//
+			"quote":			["Markets","Stock Quotes"],					// /\/quote\//
+			"technology":		["Technology","Technology"],				// /\/technology\//
+			"pf":				["Personal Finance","Personal Finance"],	// /\/pf\//
+			"yourhome":			["Personal Finance","Personal Finance"],	// /\/yourhome\//
+			"autos":			["Personal Finance","Autos"],				// /\/autos\//
+			"real_estate":		["Personal Finance","Real Estate"],			// /\/real_estate\//
+			"lifestyle":		["Personal Finance","Lifestyle"],			// /\/lifestyle\//
+			"retirement":		["Personal Finance","Retirement"],			// /\/retirement\//
+			"college-101":		["Personal Finance","College"],				// /\/101\/college-101\//
+			"smallbusiness":	["Small Business","Small Business"],		// /\/smallbusiness\//
+			"leadership":		["Personal Finance","Fortune Management Blog"],	// /\/leadership\//	- added on 8/1/2011
+			"termsheet":		["Investing","Fortune Finance Blogs"],		// /\/termsheet\//	- added on 8/1/2011
+			"services":			["Services","Services"],					// /\/services\//
+			"video":			["Video",""],								// /\/video\//
+			"profile":			["Profile",""],								// /\/profile\//
+			"interactive":		["Interactive",""],							// /\/interactive\//
+			"tools":			["Tools",""],								// /\/tools\//
+			"corrections":		["Business News",""],						// /\/corrections\//
+			"international":	["International",""]						// /\/international\//
+		} [path_array[0]];
+		if (!mnySection) { mnySection = ["Other",""]; }
+		mnySectionTemp = mnySection;
+		if (path_array[1]) {
+			mnySection = {
+				"international":	["Business News","International"],		// /\/news\/international\//
+				"world":			["Business News","International"],		// /\/news\/world\//
+				"companies":		["Business News","Companies"],			// /\/news\/companies\//
+				"economy":			["Business News","Economy"],			// /\/news\/economy\//
+				"assignment_detroit":["Business News","Economy"],			// /\/galleries\/assignment_detroit\//
+				"fortune":			["Business News","News"],				// /\/galleries\/fortune\//
+				"bing":				["Business News","News"],				// /\/galleries\/bing\//
+				"news":				["Business News","News"],				// /\/video\/news\//
+				"markets":			["Investing","Investing"],				// /\/video\/markets\//
+				"fear-and-greed":	["Investing","Investing"],				// /\/data\/fear-and-greed\//
+				"autos":			["Personal Finance","Autos"],			// /\/quizzes\/autos\//
+				"college":			["Personal Finance","College"],			// /\/pf\/college\//
+				"insurance":		["Personal Finance","Insurance"],		// /\/pf\/insurance\//
+				"retirement":		["Personal Finance","Retirement"],		// /\/calculator\/retirement\//
+				"taxes":			["Personal Finance","Taxes"],			// /\/pf\/taxes\//
+				"jobs":				["Personal Finance","Jobs"],			// /\/pf\/jobs\//
+				"funds":			["Personal Finance","Mutual Funds"],	// /\/pf\/funds\//
+				"investing":		["Investing","Investing"],				// /\/pf\/investing\//
+				"moneymag":			["Personal Finance","Personal Finance"],// /\/galleries\/moneymag\//
+				"pf":				["Personal Finance","Personal Finance"],// /\/video\/pf\//
+				"luxury":			["Luxury","Luxury"],					// /\/\/luxury\//
+				"media":			["Media","Media"],						// /\/media\//
+				"real_estate":		["Personal Finance","Real Estate"],		// /\/quizzes\/real_estate\//
+				"fsb":				["Small Business","Small Business"],	// /\/galleries\/fsb\//
+				"smallbusiness":	["Small Business","Small Business"],	// /\/video\/smallbusiness\//
+				"smbusiness":		["Small Business","Small Business"],	// /\/quizzes\/smbusiness\//
+				"enterprise":		["Technology","Enterprise"],			// /\/technology\/enterprise\//
+				"innovation":		["Technology","Innovation"],			// /\/technology\/innovation\//
+				"mobile":			["Technology","Mobile"],				// /\/technology\/mobile\//
+				"personaltech":		["Technology","Personal Tech"],			// /\/technology\/personaltech\//
+				"security":			["Technology","Security"],				// /\/technology\/security\//
+				"social":			["Technology","Social"],				// /\/technology\/social\//
+				"startups":			["Technology","Startups"],				// /\/technology\/startups\//
+				"biz2":				["Technology","Technology"],			// /\/galleries\/biz2\//
+				"business2":		["Technology","Technology"],			// /\/magazines\/business2\//
+				"technology":		["Technology","Technology"],			// /\/video\/technology\//
+				"tech":				["Technology","Technology"]				// /\/quizzes\/tech\//
+			} [path_array[1]];
+			if (!mnySection) { mnySection = mnySectionTemp; }
+			mnySectionTemp = mnySection;
+			if (path_array[0] && path_array[1]!="fear-and-greed") {	//calling this again to reset content in /data to Markets (the rest categorizes as Investing)
+				mnySection = {
+					"data":			["Markets","Markets"]					// /\/data\/subdir/
+				} [path_array[0]];
+				if (!mnySection) { mnySection = mnySectionTemp; }
+			}
+			mnySectionTemp = mnySection;
+			if (rpath.match("^/tools/")) {
+				mnySection = {
+					"homepricedata":			["Personal Finance","Real Estate"],
+					"mortgagecalc":				["Personal Finance","Real Estate"],
+					"houseafford":				["Personal Finance","Real Estate"],
+					"saveyoung":				["Personal Finance","Retirement"],
+					"savingscalc":				["Personal Finance","Retirement"],
+					"annuities":				["Personal Finance","Retirement"],
+					"retireyoung":				["Personal Finance","Retirement"],
+					"networth_ageincome":		["Personal Finance","Retirement"],
+					"retirementneed":			["Personal Finance","Retirement"],
+					"collegecost":				["Personal Finance","College"],
+					"studentloan":				["Personal Finance","College"],
+					"taxreturncalc":			["Personal Finance","Taxes"],
+					"costofliving":				["Personal Finance","Personal Finance"],
+					"debtplanner":				["Personal Finance","Personal Finance"],
+					"networth":					["Personal Finance","Personal Finance"],
+					"prioritize":				["Personal Finance","Personal Finance"],
+					"assetallocwizard":			["Personal Finance","Personal Finance"],
+					"millionaire":				["Personal Finance","Personal Finance"],
+					"moneygrow":				["Personal Finance","Personal Finance"]
+				} [path_array[1]];
+			}
+		}
+		if (!mnySection) { mnySection = mnySectionTemp; }
+		mnySectionTemp = mnySection;
+		if (path_array[2]) {
+			mnySection = {
+				"bestcompanies":		["Business News","Companies"],		// /\/magazines\/fortune\/bestcompanies\//
+				"best-companies":		["Business News","Companies"],		// /\/magazines\/fortune\/best-companies\//
+				"fortune500":			["Business News","Companies"],		// /\/magazines\/fortune\/fortune500\//
+				"fortunefastestgrowing":["Business News","Companies"],		// /\/magazines\/fortune\/fortunefastestgrowing\//
+				"global500":			["Business News","Companies"],		// /\/magazines\/fortune\/global500\//
+				"mostadmired":			["Business News","Companies"],		// /\/magazines\/fortune\/mostadmired\//
+				"most-admired":			["Business News","Companies"],		// /\/magazines\/fortune\/most-admired\//
+				"mostpowerfulwomen":	["Business News","Companies"],		// /\/magazines\/fortune\/mostpowerfulwomen\//
+				"steve_jobs":			["Business News","Companies"],		// /\/magazines\/fortune\/steve_jobs\//"
+				"assignment_detroit":	["Business News","Economy"],		// /\/news\/specials\/assignment_detroit\//
+				"crisiswallstreet":		["Business News","Economy"],		// /\/news\/specials\/crisiswallstreet\//
+				"fed":					["Business News","Economy"],		// /\/news\/specials\/fed\//
+				"fixing_crisis":		["Business News","Economy"],		// /\/news\/specials\/fixing_crisis\//
+				"obama-economy":		["Business News","Economy"],		// /\/news\/specials\/obama\-economy\//
+				"money101":				["Personal Finance","Money 101"],	// /\/magazines\/moneymag\/money101\//
+				"bplive":				["Personal Finance","Real Estate"],	// /\/magazines\/moneymag\/bplive\//
+				"moneymag_realestate":	["Personal Finance","Real Estate"],	// /\/magazines\/moneymag\/moneymag_realestate\//
+				"bpretire":				["Personal Finance","Retirement"],	// /\/magazines\/moneymag\/bpretire\//
+				"retirement-guide":		["Personal Finance","Retirement"],	// /\/magazines\/moneymag\/retirement-guide\//
+				"retirement-need":		["Personal Finance","Retirement"],	// /\/calculator\/retirement\/retirement-need\//
+				"fortune_investing":	["Investing","Investing"],			// /\/magazines\/fortune\/fortune_investing\//
+				"healthcare":			["Personal Finance","Insurance"],	// /\/news\/specials\/healthcare\//
+				"holiday_money":		["Personal Finance","Lifestyle"],	// /\/news\/specials\/holiday_money\//
+				"jobs":					["Personal Finance","Jobs"],		// /\/news\/specials\/jobs\// and galleries
+				"bestjobs":				["Personal Finance","Jobs"],		// /\/magazines\/moneymag\/bestjobs\//
+				"companies":			["Business News","Companies"],		// /\/galleries\/news\/companies\//
+				"economy":				["Business News","Economy"],		// /\/galleries\/news\/economy\//
+				"international":		["Business News","International"],	// /\/galleries\/news\/international\//
+				"world":				["Business News","International"],	// /\/galleries\/news\/world\//
+				"college":				["Personal Finance","College"],		// /\/galleries\/pf\/college\//
+				"insurance":			["Personal Finance","Insurance"],	// /\/galleries\/pf\/insurance\//
+				"taxes":				["Personal Finance","Taxes"],		// /\/galleries\/pf\/taxes\//
+				"funds":				["Personal Finance","Mutual Funds"],	// /\/pf\/funds\//
+				"investing":			["Investing","Investing"],			// /\/pf\/investing\//
+				"enterprise":			["Technology","Enterprise"],		// /\/galleries\/technology\/enterprise\//
+				"innovation":			["Technology","Innovation"],		// /\/galleries\/technology\/innovation\//
+				"mobile":				["Technology","Mobile"],			// /\/galleries\/technology\/mobile\//
+				"personaltech":			["Technology","Personal Tech"],		// /\/galleries\/technology\/personaltech\//
+				"security":				["Technology","Security"],			// /\/galleries\/technology\/security\//
+				"social":				["Technology","Social"],			// /\/galleries\/technology\/social\//
+				"startups":				["Technology","Startups"]			// /\/galleries\/technology\/startups\//
+			} [path_array[2]];
+		}
+		if (!mnySection) { mnySection = mnySectionTemp; }
+		if (rpath == "/magazines/fortune/") { mnySection = ["Home","Fortune"]; }
+		if (rpath == "/magazines/moneymag/") { mnySection = ["Home","Money Magazine"]; }
+		if (rpath == "/news/corrections/") { mnySection = ["Other",""]; }
+		if ((rpath == "/galleries/")||(rpath == "/gallery/")) { mnySection = ["Other",""]; }
+
+		//template type - prop32/eVar32
+		tt = "adbp:content";
+
+		//content type - prop33/eVar33
+		content_type = (template_type == "content" ? "adbp:article read" : "adbp:none");
+
+		//site section - prop41/eVar44, site subsection - s.prop42/eVar45
+		var url_array = rurl2.split("/");
+		var ssection1 = ssection2 = url_array[0] + "/";
+		if (url_array[1]) {
+			ssection1 = ssection2 = url_array[0] + "/" + url_array[1] + "/";
+			if (url_array[2]) {
+				ssection2 = url_array[0] + "/" + url_array[1] + "/" + url_array[2] + "/";
+			}
+		}
+
+		s.channel = mnySection[0].toLowerCase();
+		s.prop28 = mnySection[1].toLowerCase();
+		s.prop1 = mnySection[0]; s.eVar1 = "D=c1";
+		s.prop2 = mnySection[1]; s.eVar2 = "D=c2";
+		s.prop5 = "CNNMONEY"; s.eVar5 = "D=c5";
+		s.prop32 = tt;
+		s.prop33 = content_type;
+		s.prop41 = ssection1; s.eVar44 = "D=c41";
+		s.prop42 = ssection2; s.eVar45 = "D=c42";
+		s.prop64 = s.eVar64 = "";
+		s.hier1 = "news|cnn|cnnmoney|" + s.server + "|" + s.channel + "|" + s.prop28;
+
+		//add referrer value
+		var ref = (window.location.search.match(new RegExp("referrer=(.*?)($|\&)", "i")) || [])[1] || "";
+		if (ref) { s.referrer = ref; }
+	}
+
+	// AMP - Page level tracking
+	s.t();
+	
+</script>
+</body>
+</html>

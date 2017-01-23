@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Video</title>
+    <style>body{margin:0}#video-1{position:relative;padding-bottom:56.25%;height:0}#video-1 video{position:absolute;top:0;left:0;width:100%;height:100%}</style>
+</head>
+<body>
+<script type='text/javascript' src='/static/AdManager.min.js'></script>
+<script type='text/javascript' src='https://sdc.cnn.com/analytics/cnn/DynamicTracking.js'></script>
+<script type='text/javascript'>
+    var CNN = CNN || {}; CNN.AdsManager = CNN.AdsManager || {}; CNN.AdsManager.Freewheel = function () { var adManager, context = null, networkId, serverURL, displayBaseId, videoAssetId, siteSectionId, videoDuration = null; var init = function (videoId, containerId) { var self = this, networkId = 48804, serverURL = 'https://bea4.v.fwmrm.net/ad/p/1'; displayBaseId = containerId; videoAssetId = 'cnn-' + videoId, videoDuration = 157, siteSectionId = 'cnn.com_mobile_mobileweb_us'; adManager = new tv.freewheel.SDK.AdManager(); adManager.setNetwork(networkId); adManager.setServer(serverURL); context = adManager.newContext(); context.setProfile(networkId + ':turner_html5'); context.setVideoAsset(videoAssetId, videoDuration, networkId, '#v2', tv.freewheel.SDK.VIDEO_ASSET_AUTO_PLAY_TYPE_NONE); context.setSiteSection(siteSectionId, networkId); context.addKeyValue('appname','googleamp'); context.registerVideoDisplayBase(displayBaseId); context.addTemporalSlot('Preroll_1', tv.freewheel.SDK.ADUNIT_PREROLL, 0); context.setParameter(tv.freewheel.SDK.PARAMETER_RENDERER_VIDEO_START_DETECT_TIMEOUT, 10000, tv.freewheel.SDK.PARAMETER_LEVEL_GLOBAL); context.setParameter(tv.freewheel.SDK.PARAMETER_RENDERER_VIDEO_PROGRESS_DETECT_TIMEOUT, 10000, tv.freewheel.SDK.PARAMETER_LEVEL_GLOBAL); context.addEventListener(tv.freewheel.SDK.EVENT_REQUEST_COMPLETE, onRequestComplete); context.addEventListener(tv.freewheel.SDK.EVENT_SLOT_ENDED, onSlotEnded); context.submitRequest(); }; var onSlotEnded = function (event) { var slotTimePositionClass = event.slot.getTimePositionClass(); switch (slotTimePositionClass) { case tv.freewheel.SDK.TIME_POSITION_CLASS_PREROLL: context.setVideoState(tv.freewheel.SDK.VIDEO_STATE_PLAYING); CNN.AdsManager.Freewheel.slotType = "preroll"; self.playVideo(); break; case tv.freewheel.SDK.TIME_POSITION_CLASS_MIDROLL: CNN.AdsManager.Freewheel.slotType = "midroll"; break; case tv.freewheel.SDK.TIME_POSITION_CLASS_OVERLAY: CNN.AdsManager.Freewheel.slotType = "overlay"; break; case tv.freewheel.SDK.TIME_POSITION_CLASS_POSTROLL: CNN.AdsManager.Freewheel.slotType = "postroll"; break; } }; var onRequestComplete = function (event) { if (event.success) { var fwTemporalSlots = context.getTemporalSlots(); for (var i = 0; i < fwTemporalSlots.length; i++) { var slot = fwTemporalSlots[i]; CNN.AdsManager.Freewheel.slotAdDuration = slot.getTotalDuration(); switch (slot.getTimePositionClass()) { case tv.freewheel.SDK.TIME_POSITION_CLASS_PREROLL: slot.play(); case tv.freewheel.SDK.TIME_POSITION_CLASS_MIDROLL: case tv.freewheel.SDK.TIME_POSITION_CLASS_OVERLAY: case tv.freewheel.SDK.TIME_POSITION_CLASS_POSTROLL: break; } } } }; self.playVideo = function () { var video = document.getElementById(displayBaseId).firstElementChild; video.onplay = function() { if (this.currentTime === 0) { self.doTrackMetrics(); } }; video.play(); }; self.doTrackMetrics = function() { try{ trackMetrics({ type: "video-start", data: { video_id:"us/2016/12/05/dakota-access-pipeline-fight-sidner-dnt-lead.cnn", video_title:"Dakota%20Access%20Pipeline%20fight%20isn&amp;#39;t%20over", playerId:"v2", playerType:"us", trt:"157", videoCollection:"true", syndicatedContent:"", adType: CNN.AdsManager.Freewheel.slotType, ad_duration: CNN.AdsManager.Freewheel.slotAdDuration, source:"cnn", headline:"Dakota%20Access%20Pipeline%20fight%20isn&amp;#39;t%20over", section:"us" } }); } catch(err){ } }; return { init: init } }();</script>
+<div id="video-1">
+    <video id="v2" src="https://ssl.cdn.turner.com/cnn/big/us/2016/12/05/dakota-access-pipeline-fight-sidner-dnt-lead.cnn_1006608_768x432_1300k.mp4"
+           class="cnn-video-player"
+           preload="auto"
+           poster="https://ssl.cdn.turner.com/cnnnext/dam/assets/161205195432-sidner-dakota-access-pipeline-amanpour-super-169.jpg"
+           controls>
+    </video>
+</div>
+<script>function loadFreewheel(a){a.preventDefault(),a.target.removeEventListener("play",loadFreewheel,!1),CNN.AdsManager.Freewheel.init("us/2016/12/05/dakota-access-pipeline-fight-sidner-dnt-lead.cnn","video-1")}var el=document.getElementById("v2");el.addEventListener("play",loadFreewheel,!1);</script>
+</body>
+</html>
